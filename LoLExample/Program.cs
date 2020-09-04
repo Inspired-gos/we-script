@@ -29,7 +29,7 @@ namespace LoLExample
 
         public enum spellSlot
         {
-            _Q,_W,_E,_R,SUMMONER_1,SUMMONER_2,ITEM_1,ITEM_2,ITEM_3,ITEM_4,ITEM_5,ITEM_6,ITEM_7
+            _Q, _W, _E, _R, SUMMONER_1, SUMMONER_2, ITEM_1, ITEM_2, ITEM_3, ITEM_4, ITEM_5, ITEM_6, ITEM_7
         };
 
         [StructLayout(LayoutKind.Explicit)]
@@ -82,34 +82,30 @@ namespace LoLExample
             public UInt32 oObjNetworkID;
             [FieldOffset(0x1D8)]
             public Vector3 oObjPos;
-            [FieldOffset(0x450)]
+            [FieldOffset(0x26C)]
             public byte oObjVisibility;
-            [FieldOffset(0xFA8)]
+            [FieldOffset(0xDC4)]
             public float oObjHealth;
-            [FieldOffset(0xFB8)]
+            [FieldOffset(0xDD4)]
             public float oObjMaxHealth;
-            [FieldOffset(0x47C)]
-            public float oObjMana;
-            [FieldOffset(0x48C)]
-            public float oObjMaxMana;
-            [FieldOffset(0x1494)]
+            [FieldOffset(0x12AC)]
             public float oObjArmor;
-            [FieldOffset(0x148C)]
+            [FieldOffset(0x12C4)]
             public float oObjMoveSpeed;
-            [FieldOffset(0x14B4)]
+            [FieldOffset(0x12CC)]
             public float oObjAtkRange;
 
             public string oObjChampionName
             {
                 get
                 {
-                    return Memory.ReadString(processHandle, (IntPtr)(this.baseOffs + 0x35BC), false);
+                    return Memory.ReadString(processHandle, (IntPtr)(this.baseOffs + 0x312c), false);
                 }
             }
 
             public SpellDataStruct GetSpellData(spellSlot splSlot)
             {
-                var ptr = Memory.ReadPointer(processHandle, (IntPtr)(this.baseOffs + 0x2B08 + 0x508 + (uint)splSlot*4),isWow64Process);
+                var ptr = Memory.ReadPointer(processHandle, (IntPtr)(this.baseOffs + 0x2708 + 0x478 + (uint)splSlot * 4), isWow64Process);
                 return SDKUtil.ReadStructure<SpellDataStruct>(processHandle, ptr);
             }
 
@@ -125,7 +121,7 @@ namespace LoLExample
         public static uint PROCESS_ALL_ACCESS = 0x1FFFFF; //hardcoded access right to OpenProcess
         public static Vector2 wndMargins = new Vector2(0, 0); //if the game window is smaller than your desktop resolution, you should avoid drawing outside of it
         public static Vector2 wndSize = new Vector2(0, 0); //get the size of the game window ... to know where to draw
-        
+
 
         public static IntPtr GameBase = IntPtr.Zero;
         public static IntPtr GameSize = IntPtr.Zero;
@@ -230,22 +226,22 @@ namespace LoLExample
                         {
                             if (oLocalPlayer == IntPtr.Zero)
                             {
-                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34FF634); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
+                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34E1A34); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
                                 Console.WriteLine($"oLocalPlayer: {oLocalPlayer.ToString("X")}");
                             }
                             if (oHeroManager == IntPtr.Zero)
                             {
-                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x28A8FFC); //8B 35 ? ? ? ? 0F 57 ED 57 8B FB
+                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x288E754); //8B 35 ? ? ? ? 0F 57 ED 57 8B FB
                                 Console.WriteLine($"oObjManager: {oHeroManager.ToString("X")}");
                             }
                             if (oRenderer == IntPtr.Zero)
                             {
-                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x35269A0); //8B 15 ? ? ? ? 83 EC 08 F3
+                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x3508E90); //8B 15 ? ? ? ? 83 EC 08 F3
                                 Console.WriteLine($"oRenderer: {oRenderer.ToString("X")}");
                             }
                             if (oGameTime == IntPtr.Zero)
                             {
-                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34F7A7C); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
+                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34D9C1C); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
                                 Console.WriteLine($"oGameTime: {oGameTime.ToString("X")}");
                             }
                         }
@@ -288,13 +284,13 @@ namespace LoLExample
                     if (localPlayer != IntPtr.Zero)
                     {
                         gameTime = Memory.ReadFloat(processHandle, oGameTime);
-                        var lPdata = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, localPlayer,isWow64Process);
+                        var lPdata = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, localPlayer, isWow64Process);
                         var heroManager = Memory.ReadPointer(processHandle, oHeroManager, isWow64Process);
                         if (heroManager != IntPtr.Zero)
                         {
                             for (uint i = 0; i <= 12; i++)
                             {
-                                var heroPtr = Memory.ReadPointer(processHandle,(IntPtr)(heroManager.ToInt64() + i*4), isWow64Process);
+                                var heroPtr = Memory.ReadPointer(processHandle, (IntPtr)(heroManager.ToInt64() + i * 4), isWow64Process);
                                 if (heroPtr != IntPtr.Zero)
                                 {
                                     var heroData = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, heroPtr, isWow64Process);
@@ -469,7 +465,7 @@ namespace LoLExample
                                                     Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
                                                 }
                                             }
-                                            
+
                                             if (Components.VisualsComponent.DrawRangeCircle.Enabled)
                                             {
                                                 CircleRendering.Render(finalMatrix, (heroData.oObjTeam == lPdata.oObjTeam) ? Components.VisualsComponent.RangeCircleColorAlly.Color : Components.VisualsComponent.RangeCircleColorNmy.Color, heroData.oObjAtkRange + 55.0f, heroData.oObjPos);
