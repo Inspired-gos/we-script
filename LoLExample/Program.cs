@@ -226,22 +226,22 @@ namespace LoLExample
                         {
                             if (oLocalPlayer == IntPtr.Zero)
                             {
-                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34E1A34); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
+                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34E0280); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
                                 Console.WriteLine($"oLocalPlayer: {oLocalPlayer.ToString("X")}");
                             }
                             if (oHeroManager == IntPtr.Zero)
                             {
-                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x288E754); //8B 35 ? ? ? ? 0F 57 ED 57 8B FB
+                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x1C3B63C); //FF 52 30 8B 4F 04 8B 35 ? ? ? ? (Champion_Kills) string
                                 Console.WriteLine($"oObjManager: {oHeroManager.ToString("X")}");
                             }
                             if (oRenderer == IntPtr.Zero)
                             {
-                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x3508E90); //8B 15 ? ? ? ? 83 EC 08 F3
+                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x3507670); //8B 15 ? ? ? ? 83 EC 08 F3
                                 Console.WriteLine($"oRenderer: {oRenderer.ToString("X")}");
                             }
                             if (oGameTime == IntPtr.Zero)
                             {
-                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34D9C1C); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
+                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34D846C); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
                                 Console.WriteLine($"oGameTime: {oGameTime.ToString("X")}");
                             }
                         }
@@ -288,192 +288,196 @@ namespace LoLExample
                         var heroManager = Memory.ReadPointer(processHandle, oHeroManager, isWow64Process);
                         if (heroManager != IntPtr.Zero)
                         {
-                            for (uint i = 0; i <= 12; i++)
+                            var heroList = Memory.ReadPointer(processHandle, (IntPtr)(heroManager.ToInt64() + 4), isWow64Process);
+                            if (heroList != IntPtr.Zero)
                             {
-                                var heroPtr = Memory.ReadPointer(processHandle, (IntPtr)(heroManager.ToInt64() + i * 4), isWow64Process);
-                                if (heroPtr != IntPtr.Zero)
+                                for (uint i = 0; i <= 12; i++)
                                 {
-                                    var heroData = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, heroPtr, isWow64Process);
-
-                                    if ((heroData.oObjVisibility == 1) && (heroData.oObjTeam == 100 || heroData.oObjTeam == 200) && (heroData.oObjHealth > 0.1) && (heroData.oObjHealth < 10000) && (heroData.oObjMaxHealth > 99) && (heroData.oObjArmor > 0) && (heroData.oObjArmor < 1000) && (heroData.oObjPos.Y != 0.0f) && (heroData.oObjPos.X != 0.0f) && (heroData.oObjPos.Z != 0.0f)) //ghetto validity check
+                                    var heroPtr = Memory.ReadPointer(processHandle, (IntPtr)(heroList.ToInt64() + i * 4), isWow64Process);
+                                    if (heroPtr != IntPtr.Zero)
                                     {
-                                        var QData = heroData.GetSpellData(spellSlot._Q);
-                                        var WData = heroData.GetSpellData(spellSlot._W);
-                                        var EData = heroData.GetSpellData(spellSlot._E);
-                                        var RData = heroData.GetSpellData(spellSlot._R);
-                                        var DData = heroData.GetSpellData(spellSlot.SUMMONER_1);
-                                        var FData = heroData.GetSpellData(spellSlot.SUMMONER_2);
+                                        var heroData = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, heroPtr, isWow64Process);
 
-                                        Vector2 pos2D;
-                                        if (Renderer.WorldToScreen(heroData.oObjPos, out pos2D, finalMatrix, wndMargins, wndSize, W2SType.TypeOGL))
+                                        if ((heroData.oObjVisibility == 1) && (heroData.oObjTeam == 100 || heroData.oObjTeam == 200) && (heroData.oObjHealth > 0.1) && (heroData.oObjHealth < 10000) && (heroData.oObjMaxHealth > 99) && (heroData.oObjArmor > 0) && (heroData.oObjArmor < 1000) && (heroData.oObjPos.Y != 0.0f) && (heroData.oObjPos.X != 0.0f) && (heroData.oObjPos.Z != 0.0f)) //ghetto validity check
                                         {
-                                            if (Components.VisualsComponent.DrawSpellTracker.Enabled)
+                                            var QData = heroData.GetSpellData(spellSlot._Q);
+                                            var WData = heroData.GetSpellData(spellSlot._W);
+                                            var EData = heroData.GetSpellData(spellSlot._E);
+                                            var RData = heroData.GetSpellData(spellSlot._R);
+                                            var DData = heroData.GetSpellData(spellSlot.SUMMONER_1);
+                                            var FData = heroData.GetSpellData(spellSlot.SUMMONER_2);
+
+                                            Vector2 pos2D;
+                                            if (Renderer.WorldToScreen(heroData.oObjPos, out pos2D, finalMatrix, wndMargins, wndSize, W2SType.TypeOGL))
                                             {
-                                                Renderer.DrawFilledRect(pos2D.X - XposX - 5 - 1, pos2D.Y + YposY + 3 + 12 - 1, 118 + 2, 12 + 2, new Color(00, 00, 00, 0x7A)); //whole bar
-                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 0, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars
-
-                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 1, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA));
-                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 2, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA));
-                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 3, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA));
-
-                                                Renderer.DrawFilledRect(pos2D.X - XposX - 5 + 121 - 1, pos2D.Y + YposY + 3 + 12 - 1, 60 + 2, 12 + 2, new Color(00, 00, 0x5A, 0x7A)); //whole bar
-
-                                                Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars D
-                                                Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars F
-
-                                                if (QData.level > 0)
+                                                if (Components.VisualsComponent.DrawSpellTracker.Enabled)
                                                 {
-                                                    for (uint j = 1; j <= QData.level; j++)
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX - 5 - 1, pos2D.Y + YposY + 3 + 12 - 1, 118 + 2, 12 + 2, new Color(00, 00, 00, 0x7A)); //whole bar
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 0, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars
+
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 1, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA));
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 2, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA));
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * 3, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA));
+
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX - 5 + 121 - 1, pos2D.Y + YposY + 3 + 12 - 1, 60 + 2, 12 + 2, new Color(00, 00, 0x5A, 0x7A)); //whole bar
+
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars D
+                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars F
+
+                                                    if (QData.level > 0)
                                                     {
-                                                        Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._Q + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
-                                                    }
-                                                    if (QData.ammoCurrentCd > 0)
-                                                    {
-                                                        if (QData.ammo > 0)
+                                                        for (uint j = 1; j <= QData.level; j++)
                                                         {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23 - ((QData.ammoCurrentCd / QData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
+                                                            Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._Q + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
+                                                        }
+                                                        if (QData.ammoCurrentCd > 0)
+                                                        {
+                                                            if (QData.ammo > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23 - ((QData.ammoCurrentCd / QData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23 - ((QData.ammoCurrentCd / QData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
                                                         }
                                                         else
                                                         {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23 - ((QData.ammoCurrentCd / QData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            if (QData.currentCd > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23 - ((QData.currentCd / QData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
+                                                            }
                                                         }
+                                                    }
+
+
+
+                                                    if (WData.level > 0)
+                                                    {
+                                                        for (uint j = 1; j <= WData.level; j++)
+                                                        {
+                                                            Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._W + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
+                                                        }
+                                                        if (WData.ammoCurrentCd > 0)
+                                                        {
+                                                            if (WData.ammo > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23 - ((WData.ammoCurrentCd / WData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23 - ((WData.ammoCurrentCd / WData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (WData.currentCd > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23 - ((WData.currentCd / WData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
+                                                            }
+                                                        }
+                                                    }
+
+
+
+                                                    if (EData.level > 0)
+                                                    {
+                                                        for (uint j = 1; j <= EData.level; j++)
+                                                        {
+                                                            Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._E + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
+                                                        }
+                                                        if (EData.ammoCurrentCd > 0)
+                                                        {
+                                                            if (EData.ammo > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23 - ((EData.ammoCurrentCd / EData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23 - ((EData.ammoCurrentCd / EData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (EData.currentCd > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23 - ((EData.currentCd / EData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
+                                                            }
+                                                        }
+                                                    }
+
+
+                                                    if (RData.level > 0)
+                                                    {
+                                                        for (uint j = 1; j <= RData.level; j++)
+                                                        {
+                                                            Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._R + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
+                                                        }
+                                                        if (RData.ammoCurrentCd > 0)
+                                                        {
+                                                            if (RData.ammo > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23 - ((RData.ammoCurrentCd / RData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23 - ((RData.ammoCurrentCd / RData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (RData.currentCd > 0)
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23 - ((RData.currentCd / RData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
+                                                            }
+                                                            else
+                                                            {
+                                                                Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
+                                                            }
+                                                        }
+                                                    }
+
+                                                    if (DData.currentCd > 0)
+                                                    {
+                                                        Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23 - ((DData.currentCd / DData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
                                                     }
                                                     else
                                                     {
-                                                        if (QData.currentCd > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23 - ((QData.currentCd / QData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._Q, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
-                                                        }
+                                                        Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
                                                     }
-                                                }
 
 
-
-                                                if (WData.level > 0)
-                                                {
-                                                    for (uint j = 1; j <= WData.level; j++)
+                                                    if (FData.currentCd > 0)
                                                     {
-                                                        Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._W + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
-                                                    }
-                                                    if (WData.ammoCurrentCd > 0)
-                                                    {
-                                                        if (WData.ammo > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23 - ((WData.ammoCurrentCd / WData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23 - ((WData.ammoCurrentCd / WData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
+                                                        Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23 - ((FData.currentCd / FData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
                                                     }
                                                     else
                                                     {
-                                                        if (WData.currentCd > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23 - ((WData.currentCd / WData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._W, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
-                                                        }
+                                                        Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
                                                     }
                                                 }
 
-
-
-                                                if (EData.level > 0)
+                                                if (Components.VisualsComponent.DrawRangeCircle.Enabled)
                                                 {
-                                                    for (uint j = 1; j <= EData.level; j++)
-                                                    {
-                                                        Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._E + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
-                                                    }
-                                                    if (EData.ammoCurrentCd > 0)
-                                                    {
-                                                        if (EData.ammo > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23 - ((EData.ammoCurrentCd / EData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23 - ((EData.ammoCurrentCd / EData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        if (EData.currentCd > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23 - ((EData.currentCd / EData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._E, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
-                                                        }
-                                                    }
+                                                    CircleRendering.Render(finalMatrix, (heroData.oObjTeam == lPdata.oObjTeam) ? Components.VisualsComponent.RangeCircleColorAlly.Color : Components.VisualsComponent.RangeCircleColorNmy.Color, heroData.oObjAtkRange + 55.0f, heroData.oObjPos);
                                                 }
 
-
-                                                if (RData.level > 0)
-                                                {
-                                                    for (uint j = 1; j <= RData.level; j++)
-                                                    {
-                                                        Renderer.DrawRect(pos2D.X - XposX + 27 * (uint)spellSlot._R + j * 5 - 1, pos2D.Y + YposY + 3 + 21, 1, 2, new Color(0xFF, 0xFF, 00, 0xFF));
-                                                    }
-                                                    if (RData.ammoCurrentCd > 0)
-                                                    {
-                                                        if (RData.ammo > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23 - ((RData.ammoCurrentCd / RData.ammoCd) * 23), 4, new Color(0xFF, 0x7F, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23 - ((RData.ammoCurrentCd / RData.ammoCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        if (RData.currentCd > 0)
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23 - ((RData.currentCd / RData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                        }
-                                                        else
-                                                        {
-                                                            Renderer.DrawFilledRect(pos2D.X - XposX + 3 + 27 * (uint)spellSlot._R, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
-                                                        }
-                                                    }
-                                                }
-
-                                                if (DData.currentCd > 0)
-                                                {
-                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23 - ((DData.currentCd / DData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                }
-                                                else
-                                                {
-                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
-                                                }
-
-
-                                                if (FData.currentCd > 0)
-                                                {
-                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23 - ((FData.currentCd / FData.spellCd) * 23), 4, new Color(0xFF, 00, 00, 0xFF));
-                                                }
-                                                else
-                                                {
-                                                    Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 0xFF, 00, 0xFF));
-                                                }
                                             }
-
-                                            if (Components.VisualsComponent.DrawRangeCircle.Enabled)
-                                            {
-                                                CircleRendering.Render(finalMatrix, (heroData.oObjTeam == lPdata.oObjTeam) ? Components.VisualsComponent.RangeCircleColorAlly.Color : Components.VisualsComponent.RangeCircleColorNmy.Color, heroData.oObjAtkRange + 55.0f, heroData.oObjPos);
-                                            }
-
                                         }
-                                    }
 
+                                    }
                                 }
                             }
                         }
