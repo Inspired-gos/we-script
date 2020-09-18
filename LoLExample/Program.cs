@@ -82,7 +82,7 @@ namespace LoLExample
             public UInt32 oObjNetworkID;
             [FieldOffset(0x1D8)]
             public Vector3 oObjPos;
-            [FieldOffset(0x26C)]
+            [FieldOffset(0x270)]
             public byte oObjVisibility;
             [FieldOffset(0xDC4)]
             public float oObjHealth;
