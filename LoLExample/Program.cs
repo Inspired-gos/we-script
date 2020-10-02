@@ -21,9 +21,9 @@ namespace LoLExample
         [StructLayout(LayoutKind.Explicit)]
         public struct RendererStruct
         {
-            [FieldOffset(0x6C)]
+            [FieldOffset(0x68)]
             public Matrix oView;
-            [FieldOffset(0xAC)]
+            [FieldOffset(0xA8)]
             public Matrix oProjection;
         }
 
@@ -95,13 +95,13 @@ namespace LoLExample
             [FieldOffset(0x12CC)]
             public float oObjAtkRange;
 
-            public string oObjChampionName
-            {
-                get
-                {
-                    return Memory.ReadString(processHandle, (IntPtr)(this.baseOffs + 0x312c), false);
-                }
-            }
+            //public string oObjChampionName
+            //{
+            //    get
+            //    {
+            //        return Memory.ReadString(processHandle, (IntPtr)(this.baseOffs + 0x3134), false);
+            //    }
+            //}
 
             public SpellDataStruct GetSpellData(spellSlot splSlot)
             {
@@ -226,22 +226,22 @@ namespace LoLExample
                         {
                             if (oLocalPlayer == IntPtr.Zero)
                             {
-                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34E0280); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
+                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34F36CC); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
                                 Console.WriteLine($"oLocalPlayer: {oLocalPlayer.ToString("X")}");
                             }
                             if (oHeroManager == IntPtr.Zero)
                             {
-                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x1C3B63C); //FF 52 30 8B 4F 04 8B 35 ? ? ? ? (Champion_Kills) string
+                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x1C549FC); //FF 52 30 8B 4F 04 8B 35 ? ? ? ? (Champion_Kills) string
                                 Console.WriteLine($"oObjManager: {oHeroManager.ToString("X")}");
                             }
                             if (oRenderer == IntPtr.Zero)
                             {
-                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x3507670); //8B 15 ? ? ? ? 83 EC 08 F3
+                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x351AAD4); //8B 15 ? ? ? ? 83 EC 08 F3
                                 Console.WriteLine($"oRenderer: {oRenderer.ToString("X")}");
                             }
                             if (oGameTime == IntPtr.Zero)
                             {
-                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34D846C); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
+                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34EB794); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
                                 Console.WriteLine($"oGameTime: {oGameTime.ToString("X")}");
                             }
                         }
@@ -258,6 +258,7 @@ namespace LoLExample
                     oLocalPlayer = IntPtr.Zero;
                     oHeroManager = IntPtr.Zero;
                     oRenderer = IntPtr.Zero;
+                    oGameTime = IntPtr.Zero;
                     gameTime = 0;
                 }
             }
@@ -296,7 +297,17 @@ namespace LoLExample
                                     var heroPtr = Memory.ReadPointer(processHandle, (IntPtr)(heroList.ToInt64() + i * 4), isWow64Process);
                                     if (heroPtr != IntPtr.Zero)
                                     {
-                                        var heroData = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, heroPtr, isWow64Process);
+                                        GameObjectStruct heroData;
+                                        //var heroData = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, heroPtr, isWow64Process);
+                                        try
+                                        {
+                                            heroData = SDKUtil.ReadStructureEx<GameObjectStruct>(processHandle, heroPtr, isWow64Process);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            //Console.WriteLine(e);
+                                            continue;
+                                        }
 
                                         if ((heroData.oObjVisibility == 1) && (heroData.oObjTeam == 100 || heroData.oObjTeam == 200) && (heroData.oObjHealth > 0.1) && (heroData.oObjHealth < 10000) && (heroData.oObjMaxHealth > 99) && (heroData.oObjArmor > 0) && (heroData.oObjArmor < 1000) && (heroData.oObjPos.Y != 0.0f) && (heroData.oObjPos.X != 0.0f) && (heroData.oObjPos.Z != 0.0f)) //ghetto validity check
                                         {
@@ -323,7 +334,7 @@ namespace LoLExample
 
                                                     Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars D
                                                     Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars F
-
+                                                    
                                                     if (QData.level > 0)
                                                     {
                                                         for (uint j = 1; j <= QData.level; j++)
