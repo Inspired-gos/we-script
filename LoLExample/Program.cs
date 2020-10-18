@@ -80,7 +80,7 @@ namespace LoLExample
             public UInt16 oObjTeam;
             [FieldOffset(0xCC)]
             public UInt32 oObjNetworkID;
-            [FieldOffset(0x1D8)]
+            [FieldOffset(0x220)]
             public Vector3 oObjPos;
             [FieldOffset(0x270)]
             public byte oObjVisibility;
@@ -88,11 +88,11 @@ namespace LoLExample
             public float oObjHealth;
             [FieldOffset(0xDD4)]
             public float oObjMaxHealth;
-            [FieldOffset(0x12AC)]
+            [FieldOffset(0x12B0)]
             public float oObjArmor;
-            [FieldOffset(0x12C4)]
+            [FieldOffset(0x12C8)]
             public float oObjMoveSpeed;
-            [FieldOffset(0x12CC)]
+            [FieldOffset(0x12D0)]
             public float oObjAtkRange;
 
             //public string oObjChampionName
@@ -105,7 +105,7 @@ namespace LoLExample
 
             public SpellDataStruct GetSpellData(spellSlot splSlot)
             {
-                var ptr = Memory.ReadPointer(processHandle, (IntPtr)(this.baseOffs + 0x2708 + 0x478 + (uint)splSlot * 4), isWow64Process);
+                var ptr = Memory.ReadPointer(processHandle, (IntPtr)(this.baseOffs + 0x2720 + 0x478 + (uint)splSlot * 4), isWow64Process);
                 return SDKUtil.ReadStructure<SpellDataStruct>(processHandle, ptr);
             }
 
@@ -226,22 +226,22 @@ namespace LoLExample
                         {
                             if (oLocalPlayer == IntPtr.Zero)
                             {
-                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x34F36CC); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
+                                oLocalPlayer = (IntPtr)(GameBase.ToInt64() + 0x3504A14); //A1 ? ? ? ? 85 C0 74 07 05 ? ? ? ? EB 02 33 C0 56
                                 Console.WriteLine($"oLocalPlayer: {oLocalPlayer.ToString("X")}");
                             }
                             if (oHeroManager == IntPtr.Zero)
                             {
-                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x1C549FC); //FF 52 30 8B 4F 04 8B 35 ? ? ? ? (Champion_Kills) string
+                                oHeroManager = (IntPtr)(GameBase.ToInt64() + 0x1C65D08); //FF 52 30 8B 4F 04 8B 35 ? ? ? ? (Champion_Kills) string
                                 Console.WriteLine($"oObjManager: {oHeroManager.ToString("X")}");
                             }
                             if (oRenderer == IntPtr.Zero)
                             {
-                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x351AAD4); //8B 15 ? ? ? ? 83 EC 08 F3
+                                oRenderer = (IntPtr)(GameBase.ToInt64() + 0x352CA10); //8B 15 ? ? ? ? 83 EC 08 F3
                                 Console.WriteLine($"oRenderer: {oRenderer.ToString("X")}");
                             }
                             if (oGameTime == IntPtr.Zero)
                             {
-                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34EB794); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
+                                oGameTime = (IntPtr)(GameBase.ToInt64() + 0x34FCA04); //D9 5C 24 14 F3 0F 10 4C 24 14 0F 57 C0
                                 Console.WriteLine($"oGameTime: {oGameTime.ToString("X")}");
                             }
                         }
@@ -266,7 +266,7 @@ namespace LoLExample
 
         public static int XposX = 90;
         public static int YposY = 0;
-
+        public static Matrix finalMatrix;
 
         private static void OnRenderer(int fps, EventArgs args)
         {
@@ -280,7 +280,11 @@ namespace LoLExample
                 if (rendBase != IntPtr.Zero)
                 {
                     var matStruct = SDKUtil.ReadStructure<RendererStruct>(processHandle, rendBase);
-                    var finalMatrix = matStruct.oView * matStruct.oProjection;
+                    var tempMatrix = matStruct.oView * matStruct.oProjection;
+                    if ((tempMatrix.M11 > Single.Epsilon) && (tempMatrix.M22 > Single.Epsilon) && (tempMatrix.M33 > Single.Epsilon) && (tempMatrix.M44 > Single.Epsilon))
+                    {
+                        finalMatrix = tempMatrix;
+                    }
                     var localPlayer = Memory.ReadPointer(processHandle, oLocalPlayer, isWow64Process);
                     if (localPlayer != IntPtr.Zero)
                     {
@@ -334,7 +338,7 @@ namespace LoLExample
 
                                                     Renderer.DrawFilledRect(pos2D.X - XposX + 121, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars D
                                                     Renderer.DrawFilledRect(pos2D.X - XposX + 121 + 4 + 23, pos2D.Y + YposY + 3 + 16, 23, 4, new Color(00, 00, 00, 0xAA)); //spell bars F
-                                                    
+
                                                     if (QData.level > 0)
                                                     {
                                                         for (uint j = 1; j <= QData.level; j++)
